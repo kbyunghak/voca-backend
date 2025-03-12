@@ -158,17 +158,34 @@ const VocaSchema = new mongoose.Schema({
   app.delete("/api/words/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const deletedWord = await Word.findByIdAndDelete(id);
-        
-        if (!deletedWord) {
+        console.log("Received DELETE request for ID:", id);
+
+        // Find the document that contains the word
+        const wordsList = await VocaModel.findOne({ "words.id": id });
+        if (!wordsList) {
+            console.log("Word not found with ID:", id);
             return res.status(404).json({ message: "Word not found" });
         }
-        
-        res.json({ message: "Word deleted successfully" });
+
+        // Remove the word from the words array using `$pull`
+        const result = await VocaModel.updateOne(
+            {},
+            { $pull: { words: { id: id } } }
+        );
+
+        if (result.modifiedCount > 0) {
+            console.log("Word deleted successfully:", id);
+            return res.json({ message: "Word deleted successfully" });
+        } else {
+            console.log("Word not deleted:", id);
+            return res.status(500).json({ message: "Failed to delete word" });
+        }
+
     } catch (error) {
-        res.status(500).json({ message: "Error deleting word", error });
+        console.error("Error deleting word:", error);
+        res.status(500).json({ message: "Error deleting word", error: error.message || error.toString() });
     }
-});  
+});
   
   // Run server
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
