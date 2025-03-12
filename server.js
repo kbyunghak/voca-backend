@@ -155,6 +155,20 @@ const VocaSchema = new mongoose.Schema({
     }
   });
   
+  app.delete("/api/words/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedWord = await Word.findByIdAndDelete(id);
+        
+        if (!deletedWord) {
+            return res.status(404).json({ message: "Word not found" });
+        }
+        
+        res.json({ message: "Word deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: "Error deleting word", error });
+    }
+});  
   
   // Run server
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
